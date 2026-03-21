@@ -3,17 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.9.0"
+    "node": "22.x"
   },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "vercel": "vercel",
-    "vercel:pull": "vercel pull --yes --environment=production",
-    "vercel:deploy": "vercel deploy",
-    "vercel:prod": "vercel deploy --prod"
+    "vercel": "npx vercel",
+    "vercel:pull": "npx vercel pull --yes --environment=production",
+    "vercel:deploy": "npx vercel deploy",
+    "vercel:prod": "npx vercel deploy --prod"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
@@ -33,7 +33,6 @@
     "eslint-config-next": "16.2.0",
     "magicui-cli": "^0.1.6",
     "tailwindcss": "^4",
-    "typescript": "^5",
-    "vercel": "^50.34.3"
+    "typescript": "^5"
   }
 }
