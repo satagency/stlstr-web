@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "vercel": "vercel",
+    "vercel:pull": "vercel pull --yes --environment=production",
+    "vercel:deploy": "vercel deploy",
+    "vercel:prod": "vercel deploy --prod"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
@@ -26,6 +30,7 @@
     "eslint-config-next": "16.2.0",
     "magicui-cli": "^0.1.6",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vercel": "^50.34.3"
   }
 }
