@@ -1,13 +1,20 @@
 import type { NextConfig } from "next";
-import path from "path";
-import { fileURLToPath } from "url";
 
-/** Directory containing this config (the Next app root), not a parent lockfile. */
-const projectRoot = path.dirname(fileURLToPath(import.meta.url));
-
+/**
+ * Turbopack must use the process working directory (where you run `next dev` / `next build`),
+ * not `import.meta.url` — the latter can resolve to a compiled path and break `@import "tailwindcss"`.
+ */
 const nextConfig: NextConfig = {
   turbopack: {
-    root: projectRoot,
+    root: process.cwd(),
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/decks/ticketmaster-exec",
+        destination: "/decks/SetLister_x_Ticketmaster_Exec_Deck.html",
+      },
+    ];
   },
 };
 

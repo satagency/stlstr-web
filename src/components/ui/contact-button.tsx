@@ -14,7 +14,7 @@ export function ContactButton({ href, label, description }: ContactButtonProps) 
       className="group flex w-full items-center justify-between rounded-2xl border border-zinc-200 bg-white px-5 py-4 shadow-sm transition hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow"
     >
       <span>
-        <span className="block text-base font-semibold uppercase tracking-[0.08em] text-zinc-900 underline-offset-4 group-hover:underline">
+        <span className="block text-base font-medium uppercase text-zinc-900 underline-offset-4 group-hover:underline">
           {label}
         </span>
         <span className="block text-sm text-zinc-600">{description}</span>

@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SetLister × Ticketmaster</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  /* Full-viewport slides; type scales with slide width (container cqw). */
+  :root {
+    --background: #ffffff;
+    --foreground: #0a0a0a;
+    --zinc-50: #fafafa;
+    --zinc-100: #f4f4f5;
+    --zinc-200: #e4e4e7;
+    --zinc-300: #d4d4d8;
+    --zinc-400: #a1a1aa;
+    --zinc-500: #71717a;
+    --zinc-600: #52525b;
+    --zinc-700: #3f3f46;
+    --zinc-900: #18181b;
+    --accent: var(--foreground);
+    --muted: var(--zinc-600);
+    --border: var(--zinc-200);
+    --surface: var(--zinc-50);
+    /* Table: full-bleed (no inset card); hairlines only */
+    --table-rule: rgba(10, 10, 10, 0.08);
+    --table-header: var(--zinc-500);
+    --table-cell: var(--zinc-700);
+    /* Global type + spacing scale (+35%) */
+    --fs: 1.35;
+  }
+
+  html {
+    scroll-snap-type: y mandatory;
+    overflow-y: scroll;
+    overflow-x: hidden;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Narrow viewports: SF / system text for native-feeling rhythm */
+  @media (max-width: 640px) {
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', system-ui, sans-serif;
+    }
+  }
+
+  .slide {
+    min-height: 100svh;
+    min-height: 100dvh;
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.55s ease, transform 0.55s ease;
+  }
+
+  .slide.visible { opacity: 1; transform: translateY(0); }
+
+  .slide-canvas {
+    container-type: inline-size;
+    container-name: slide;
+    flex: 1;
+    width: 100%;
+    min-width: 0;
+    min-height: 100svh;
+    min-height: 100dvh;
+    background: var(--background);
+    --pad-y: clamp(calc(28px * var(--fs)), calc(5.5vw * var(--fs)), calc(72px * var(--fs)));
+    --pad-x: clamp(calc(32px * var(--fs)), calc(6.25vw * var(--fs)), calc(96px * var(--fs)));
+    padding: max(var(--pad-y), env(safe-area-inset-top, 0px)) max(var(--pad-x), env(safe-area-inset-right, 0px))
+      max(var(--pad-y), env(safe-area-inset-bottom, 0px)) max(var(--pad-x), env(safe-area-inset-left, 0px));
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .slide-cover .slide-canvas {
+    justify-content: space-between;
+  }
+
+  .slide-num {
+    position: absolute;
+    top: calc(4cqw * var(--fs));
+    right: calc(6.25cqw * var(--fs));
+    font-size: clamp(calc(10px * var(--fs)), calc(0.95cqw * var(--fs)), calc(12px * var(--fs)));
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--zinc-500);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tag {
+    display: block;
+    font-size: clamp(calc(11px * var(--fs)), calc(1.05cqw * var(--fs)), calc(13px * var(--fs)));
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--zinc-500);
+    margin-bottom: clamp(calc(12px * var(--fs)), calc(1.5cqw * var(--fs)), calc(20px * var(--fs)));
+    text-transform: uppercase;
+  }
+
+  h1 {
+    font-size: clamp(calc(28px * var(--fs)), calc(4.75cqw * var(--fs)), calc(56px * var(--fs)));
+    line-height: 1.08;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    margin-bottom: 0;
+  }
+
+  h2 {
+    font-size: clamp(calc(22px * var(--fs)), calc(3.15cqw * var(--fs)), calc(40px * var(--fs)));
+    line-height: 1.12;
+    font-weight: 500;
+    letter-spacing: -0.025em;
+    margin-bottom: clamp(calc(10px * var(--fs)), calc(1.25cqw * var(--fs)), calc(18px * var(--fs)));
+    max-width: min(32em, 100%);
+  }
+
+  .sub {
+    font-size: clamp(calc(14px * var(--fs)), calc(1.45cqw * var(--fs)), calc(19px * var(--fs)));
+    font-weight: 400;
+    line-height: 1.55;
+    color: var(--zinc-600);
+    max-width: min(38em, 100%);
+  }
+
+  strong {
+    font-weight: 500;
+  }
+
+  /* —— Cover —— */
+  .wordmark {
+    line-height: 0;
+    align-self: flex-start;
+  }
+
+  .wordmark img {
+    display: block;
+    height: clamp(calc(11px * var(--fs)), calc(0.72cqw * var(--fs)), calc(15px * var(--fs)));
+    width: auto;
+    max-width: min(72vw, 15rem);
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  .cover-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    position: relative;
+    min-height: 0;
+  }
+
+  .x-mark {
+    font-size: clamp(calc(64px * var(--fs)), calc(14cqw * var(--fs)), calc(140px * var(--fs)));
+    line-height: 0.9;
+    font-weight: 500;
+    letter-spacing: -0.05em;
+    color: var(--foreground);
+    opacity: 0.06;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .cover-eyebrow {
+    font-size: clamp(calc(11px * var(--fs)), calc(1cqw * var(--fs)), calc(13px * var(--fs)));
+    font-weight: 500;
+    color: var(--zinc-500);
+    margin-bottom: clamp(calc(10px * var(--fs)), calc(1.25cqw * var(--fs)), calc(16px * var(--fs)));
+  }
+
+  .cover-title {
+    font-size: clamp(calc(26px * var(--fs)), calc(4.2cqw * var(--fs)), calc(52px * var(--fs)));
+    line-height: 1.06;
+    font-weight: 500;
+    letter-spacing: -0.035em;
+  }
+
+  .cover-title em {
+    font-style: normal;
+    color: var(--zinc-400);
+    font-weight: 500;
+  }
+
+  .cover-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: calc(8px * var(--fs)) calc(20px * var(--fs));
+    font-size: clamp(calc(11px * var(--fs)), calc(1cqw * var(--fs)), calc(13px * var(--fs)));
+    font-weight: 500;
+    color: var(--zinc-600);
+  }
+
+  .cover-foot span.sep { color: var(--zinc-300); }
+
+  /* —— Idea —— */
+  .idea-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: clamp(calc(24px * var(--fs)), calc(4cqw * var(--fs)), calc(56px * var(--fs)));
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    margin-top: clamp(calc(4px * var(--fs)), calc(0.75cqw * var(--fs)), calc(12px * var(--fs)));
+  }
+
+  .big-stat {
+    font-size: clamp(calc(36px * var(--fs)), calc(5.25cqw * var(--fs)), calc(72px * var(--fs)));
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: -0.035em;
+    color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .big-stat-label {
+    font-size: clamp(calc(11px * var(--fs)), calc(1.05cqw * var(--fs)), calc(13px * var(--fs)));
+    font-weight: 500;
+    color: var(--zinc-500);
+    margin-top: clamp(calc(6px * var(--fs)), calc(0.65cqw * var(--fs)), calc(10px * var(--fs)));
+    max-width: 14em;
+    line-height: 1.35;
+  }
+
+  .stat-stack {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(calc(20px * var(--fs)), calc(2.5cqw * var(--fs)), calc(36px * var(--fs)));
+  }
+
+  /* —— Steps —— */
+  .steps {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: min(52em, 100%);
+    margin-top: clamp(calc(6px * var(--fs)), calc(1cqw * var(--fs)), calc(14px * var(--fs)));
+  }
+
+  .step {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: clamp(calc(12px * var(--fs)), calc(1.75cqw * var(--fs)), calc(22px * var(--fs)));
+    padding: clamp(calc(12px * var(--fs)), calc(1.5cqw * var(--fs)), calc(18px * var(--fs))) 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .step:last-child { border-bottom: none; }
+
+  .step-n {
+    font-size: clamp(calc(11px * var(--fs)), calc(1.05cqw * var(--fs)), calc(13px * var(--fs)));
+    font-weight: 500;
+    color: var(--zinc-400);
+    padding-top: 0.2em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .step-text strong {
+    display: block;
+    font-size: clamp(calc(14px * var(--fs)), calc(1.35cqw * var(--fs)), calc(17px * var(--fs)));
+    font-weight: 500;
+    margin-bottom: 0.25em;
+    color: var(--foreground);
+    letter-spacing: -0.015em;
+    line-height: 1.35;
+  }
+
+  .step-text span {
+    font-size: clamp(calc(13px * var(--fs)), calc(1.2cqw * var(--fs)), calc(16px * var(--fs)));
+    color: var(--zinc-600);
+    line-height: 1.5;
+  }
+
+  /* —— Revenue —— */
+  .rev-split {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    margin: clamp(calc(16px * var(--fs)), calc(2cqw * var(--fs)), calc(28px * var(--fs))) 0
+      clamp(calc(14px * var(--fs)), calc(1.75cqw * var(--fs)), calc(24px * var(--fs)));
+    width: 100%;
+    max-width: 100%;
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .rev-block {
+    background: var(--surface);
+    padding: clamp(calc(14px * var(--fs)), calc(1.75cqw * var(--fs)), calc(22px * var(--fs)))
+      clamp(calc(12px * var(--fs)), calc(1.5cqw * var(--fs)), calc(20px * var(--fs)));
+  }
+
+  .rev-block.highlight {
+    background: var(--foreground);
+    color: var(--background);
+  }
+
+  .rev-pct {
+    font-size: clamp(calc(26px * var(--fs)), calc(3.5cqw * var(--fs)), calc(48px * var(--fs)));
+    line-height: 1;
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--foreground);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .rev-block.highlight .rev-pct { color: var(--background); }
+
+  .rev-who {
+    font-size: clamp(calc(10px * var(--fs)), calc(0.9cqw * var(--fs)), calc(12px * var(--fs)));
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--zinc-500);
+    margin-top: clamp(calc(6px * var(--fs)), calc(0.65cqw * var(--fs)), calc(10px * var(--fs)));
+  }
+
+  .rev-block.highlight .rev-who { color: rgba(255, 255, 255, 0.7); }
+
+  .numbers-row {
+    display: flex;
+    gap: clamp(calc(20px * var(--fs)), calc(3.5cqw * var(--fs)), calc(48px * var(--fs)));
+    flex-wrap: wrap;
+    margin-top: 0.25em;
+  }
+
+  .num-val {
+    font-size: clamp(calc(22px * var(--fs)), calc(2.85cqw * var(--fs)), calc(38px * var(--fs)));
+    font-weight: 500;
+    letter-spacing: -0.03em;
+    color: var(--foreground);
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .num-label {
+    font-size: clamp(calc(10px * var(--fs)), calc(0.95cqw * var(--fs)), calc(12px * var(--fs)));
+    font-weight: 500;
+    color: var(--zinc-500);
+    margin-top: clamp(calc(4px * var(--fs)), calc(0.5cqw * var(--fs)), calc(8px * var(--fs)));
+    max-width: 12em;
+    line-height: 1.35;
+  }
+
+  /* —— Scale table (full width, flush — no inset / grouped card) —— */
+  .scale-table {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin-top: clamp(calc(12px * var(--fs)), calc(1.5cqw * var(--fs)), calc(20px * var(--fs)));
+    border-spacing: 0;
+  }
+
+  .scale-table th {
+    text-align: left;
+    font-size: clamp(calc(11px * var(--fs)), calc(0.95cqw * var(--fs)), calc(12px * var(--fs)));
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--table-header);
+    padding: clamp(calc(10px * var(--fs)), calc(1.1cqw * var(--fs)), calc(14px * var(--fs)))
+      clamp(calc(6px * var(--fs)), 0.65cqw, calc(10px * var(--fs)))
+      clamp(calc(8px * var(--fs)), calc(0.9cqw * var(--fs)), calc(11px * var(--fs)));
+    border-bottom: 1px solid var(--table-rule);
+    vertical-align: bottom;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    line-height: 1.25;
+  }
+
+  .scale-table th:last-child {
+    text-align: right;
+  }
+
+  .scale-table td {
+    padding: clamp(calc(12px * var(--fs)), calc(1.25cqw * var(--fs)), calc(16px * var(--fs)))
+      clamp(calc(6px * var(--fs)), 0.65cqw, calc(10px * var(--fs)));
+    border-bottom: 1px solid var(--table-rule);
+    font-size: clamp(calc(14px * var(--fs)), calc(1.2cqw * var(--fs)), calc(17px * var(--fs)));
+    font-weight: 400;
+    vertical-align: middle;
+    color: var(--table-cell);
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    line-height: 1.35;
+    letter-spacing: -0.012em;
+  }
+
+  .scale-table td:last-child {
+    font-size: clamp(calc(15px * var(--fs)), calc(1.35cqw * var(--fs)), calc(19px * var(--fs)));
+    font-weight: 500;
+    color: var(--foreground);
+    letter-spacing: -0.02em;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .scale-table tbody tr:nth-last-child(2) td {
+    border-bottom: none;
+  }
+
+  .scale-table tbody tr:last-child td {
+    border-bottom: none;
+    padding-top: clamp(calc(14px * var(--fs)), calc(1.4cqw * var(--fs)), calc(18px * var(--fs)));
+    color: var(--foreground);
+    font-weight: 500;
+    letter-spacing: -0.015em;
+    border-top: 1px solid var(--border);
+  }
+
+  .scale-table tbody tr:last-child td:last-child {
+    font-size: clamp(calc(17px * var(--fs)), calc(1.65cqw * var(--fs)), calc(22px * var(--fs)));
+    letter-spacing: -0.022em;
+  }
+
+  .scale-table tbody tr:last-child td:not(:last-child) {
+    font-size: clamp(calc(14px * var(--fs)), calc(1.15cqw * var(--fs)), calc(16px * var(--fs)));
+    font-weight: 500;
+  }
+
+  .foot-note {
+    font-size: clamp(calc(11px * var(--fs)), calc(1.05cqw * var(--fs)), calc(13px * var(--fs)));
+    color: var(--zinc-500);
+    margin-top: clamp(calc(10px * var(--fs)), calc(1.25cqw * var(--fs)), calc(16px * var(--fs)));
+    max-width: min(48em, 100%);
+    line-height: 1.45;
+  }
+
+  .pill {
+    display: inline-block;
+    margin-left: 0.4em;
+    padding: 0.15em 0.5em;
+    border-radius: 999px;
+    font-size: 0.72em;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    background: var(--zinc-100);
+    color: var(--zinc-600);
+    border: none;
+    vertical-align: 0.08em;
+    line-height: 1.2;
+  }
+
+  /* —— Two col —— */
+  .two-col {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.42fr);
+    gap: 1px;
+    width: 100%;
+    max-width: 100%;
+    margin-top: clamp(calc(12px * var(--fs)), calc(1.5cqw * var(--fs)), calc(20px * var(--fs)));
+    background: var(--border);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .col-block {
+    background: var(--surface);
+    padding: clamp(calc(16px * var(--fs)), calc(2cqw * var(--fs)), calc(26px * var(--fs)))
+      clamp(calc(14px * var(--fs)), calc(1.75cqw * var(--fs)), calc(24px * var(--fs)));
+  }
+
+  .col-block h3 {
+    font-size: clamp(calc(10px * var(--fs)), calc(0.95cqw * var(--fs)), calc(12px * var(--fs)));
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--zinc-500);
+    margin-bottom: clamp(calc(12px * var(--fs)), calc(1.35cqw * var(--fs)), calc(18px * var(--fs)));
+  }
+
+  .col-block ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(calc(8px * var(--fs)), calc(1cqw * var(--fs)), calc(12px * var(--fs)));
+  }
+
+  .col-block li {
+    font-size: clamp(calc(13px * var(--fs)), calc(1.2cqw * var(--fs)), calc(16px * var(--fs)));
+    line-height: 1.45;
+    color: var(--zinc-700);
+    padding-left: 1em;
+    position: relative;
+  }
+
+  .col-block li::before {
+    content: '·';
+    position: absolute;
+    left: 0;
+    color: var(--zinc-400);
+    font-weight: 500;
+  }
+
+  .col-block.emphasis {
+    background: var(--background);
+    box-shadow: inset 3px 0 0 var(--foreground);
+  }
+
+  .col-block.emphasis li::before {
+    color: var(--foreground);
+  }
+
+  /* —— Ask —— */
+  .ask-body {
+    width: 100%;
+    max-width: min(40em, 100%);
+    margin-top: clamp(calc(4px * var(--fs)), calc(0.5cqw * var(--fs)), calc(8px * var(--fs)));
+  }
+
+  .ask-line {
+    font-size: clamp(calc(17px * var(--fs)), calc(2.15cqw * var(--fs)), calc(28px * var(--fs)));
+    line-height: 1.4;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin-bottom: clamp(calc(20px * var(--fs)), calc(2.25cqw * var(--fs)), calc(32px * var(--fs)));
+    color: var(--zinc-900);
+  }
+
+  .ask-items {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(calc(10px * var(--fs)), calc(1.15cqw * var(--fs)), calc(14px * var(--fs)));
+  }
+
+  .ask-item {
+    display: flex;
+    align-items: flex-start;
+    gap: clamp(calc(10px * var(--fs)), calc(1.15cqw * var(--fs)), calc(14px * var(--fs)));
+    font-size: clamp(calc(13px * var(--fs)), calc(1.2cqw * var(--fs)), calc(16px * var(--fs)));
+    color: var(--zinc-700);
+    line-height: 1.45;
+  }
+
+  .ask-dot {
+    width: calc(6px * var(--fs));
+    height: calc(6px * var(--fs));
+    border-radius: 50%;
+    background: var(--foreground);
+    flex-shrink: 0;
+    margin-top: 0.45em;
+  }
+
+  .rule {
+    width: clamp(calc(36px * var(--fs)), calc(4cqw * var(--fs)), calc(48px * var(--fs)));
+    height: 2px;
+    background: var(--foreground);
+    margin-bottom: clamp(calc(16px * var(--fs)), calc(2cqw * var(--fs)), calc(24px * var(--fs)));
+    border-radius: 1px;
+    opacity: 0.85;
+  }
+
+  /* Nav */
+  .nav {
+    position: fixed;
+    right: max(clamp(calc(12px * var(--fs)), 2vw, calc(24px * var(--fs))), env(safe-area-inset-right, 0px));
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    gap: calc(8px * var(--fs));
+    z-index: 100;
+  }
+
+  .nav-dot {
+    width: calc(8px * var(--fs));
+    height: calc(8px * var(--fs));
+    min-width: 10px;
+    min-height: 10px;
+    border-radius: 50%;
+    background: var(--zinc-300);
+    cursor: pointer;
+    transition: background 0.25s ease, transform 0.25s ease;
+  }
+
+  .nav-dot.active {
+    background: var(--foreground);
+    transform: scale(1.25);
+  }
+
+  @media (pointer: coarse) {
+    .nav-dot {
+      width: max(calc(10px * var(--fs)), 12px);
+      height: max(calc(10px * var(--fs)), 12px);
+    }
+  }
+
+  @container slide (max-width: 960px) {
+    .idea-grid {
+      grid-template-columns: 1fr;
+      gap: clamp(calc(20px * var(--fs)), calc(3cqw * var(--fs)), calc(40px * var(--fs)));
+    }
+  }
+
+  @container slide (max-width: 640px) {
+    .slide-canvas {
+      --fs: 1;
+      --pad-y: clamp(20px, 5.2vw, 40px);
+      --pad-x: clamp(20px, 5vw, 32px);
+    }
+
+    .two-col { grid-template-columns: 1fr; }
+    .rev-split { grid-template-columns: 1fr 1fr; }
+    .col-block.emphasis { box-shadow: inset 0 3px 0 0 var(--foreground); }
+
+    /* Type scale: display → title → body → caption (tighter, readable on phone) */
+    .slide-num {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+    }
+
+    .tag {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      margin-bottom: clamp(10px, 2.5cqw, 16px);
+    }
+
+    h1 {
+      font-size: clamp(1.375rem, 5.25cqw, 2.125rem);
+      line-height: 1.09;
+      letter-spacing: -0.028em;
+    }
+
+    h2 {
+      font-size: clamp(1.25rem, 4cqw, 1.625rem);
+      line-height: 1.12;
+      letter-spacing: -0.024em;
+      margin-bottom: clamp(8px, 1.8cqw, 14px);
+    }
+
+    .sub {
+      font-size: clamp(0.9375rem, 2.75cqw, 1.0625rem);
+      line-height: 1.5;
+      letter-spacing: -0.011em;
+    }
+
+    .wordmark img {
+      height: clamp(10px, 2.6cqw, 13px);
+      max-width: min(70vw, 12.5rem);
+    }
+
+    .cover-eyebrow,
+    .cover-foot {
+      font-size: 11px;
+      letter-spacing: 0.02em;
+    }
+
+    .cover-title {
+      font-size: clamp(1.5rem, 5.5cqw, 2rem);
+      line-height: 1.07;
+      letter-spacing: -0.032em;
+    }
+
+    .x-mark {
+      font-size: clamp(3rem, 16cqw, 4.5rem);
+    }
+
+    .big-stat {
+      font-size: clamp(1.75rem, 6.5cqw, 2.375rem);
+      letter-spacing: -0.032em;
+    }
+
+    .big-stat-label {
+      font-size: 11px;
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+    }
+
+    .step-n {
+      font-size: 11px;
+    }
+
+    .step-text strong {
+      font-size: 0.9375rem;
+      line-height: 1.35;
+    }
+
+    .step-text span {
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .rev-block {
+      padding: clamp(12px, 2.8cqw, 18px) clamp(10px, 2.2cqw, 16px);
+    }
+
+    .rev-pct {
+      font-size: clamp(1.25rem, 4.8cqw, 1.75rem);
+      letter-spacing: -0.03em;
+    }
+
+    .rev-who {
+      font-size: 10px;
+      letter-spacing: 0.05em;
+      margin-top: clamp(5px, 1.2cqw, 8px);
+    }
+
+    .numbers-row {
+      gap: clamp(14px, 3cqw, 28px);
+    }
+
+    .num-val {
+      font-size: clamp(1.0625rem, 3.6cqw, 1.375rem);
+      letter-spacing: -0.025em;
+    }
+
+    .num-label {
+      font-size: 10px;
+      line-height: 1.4;
+      letter-spacing: 0.015em;
+    }
+
+    .scale-table th {
+      font-size: 10px;
+      letter-spacing: 0.05em;
+    }
+
+    .scale-table td {
+      font-size: 0.875rem;
+      line-height: 1.45;
+    }
+
+    .scale-table td:last-child {
+      font-size: 0.9375rem;
+    }
+
+    .scale-table tbody tr:last-child td:not(:last-child) {
+      font-size: 0.8125rem;
+    }
+
+    .scale-table tbody tr:last-child td:last-child {
+      font-size: 1.0625rem;
+    }
+
+    .foot-note {
+      font-size: 11px;
+      line-height: 1.45;
+    }
+
+    .col-block h3 {
+      font-size: 10px;
+      letter-spacing: 0.07em;
+    }
+
+    .col-block li {
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .ask-line {
+      font-size: clamp(1.0625rem, 3.4cqw, 1.25rem);
+      line-height: 1.45;
+      letter-spacing: -0.018em;
+      margin-bottom: clamp(16px, 3.5cqw, 24px);
+    }
+
+    .ask-item {
+      font-size: 0.875rem;
+      line-height: 1.5;
+    }
+
+    .rule {
+      margin-bottom: clamp(12px, 2.5cqw, 18px);
+    }
+  }
+
+  @container slide (max-width: 420px) {
+    .slide-canvas { --fs: 0.92; }
+
+    .rev-split {
+      grid-template-columns: 1fr;
+    }
+
+    h2 {
+      font-size: clamp(1.125rem, 4.5cqw, 1.5rem);
+    }
+
+    .cover-title {
+      font-size: clamp(1.375rem, 6cqw, 1.875rem);
+    }
+
+    .big-stat {
+      font-size: clamp(1.5rem, 7cqw, 2.125rem);
+    }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav"></nav>
+
+<!-- SLIDE 1 — COVER -->
+<section class="slide slide-cover" data-label="Cover">
+  <div class="slide-canvas">
+    <div class="wordmark">
+      <img src="/SET%20INTEL%20GRAY.png" alt="SetLister Intelligence" width="360" height="48" decoding="async" />
+    </div>
+    <div class="cover-body">
+      <p class="cover-eyebrow">Confidential · March 2026</p>
+      <h1 class="cover-title">SetLister<br><em>×</em><br>Ticketmaster</h1>
+      <div class="x-mark" aria-hidden="true">×</div>
+    </div>
+    <div class="cover-foot">
+      <span>Net-new revenue</span>
+      <span class="sep">·</span>
+      <span>Fan engagement</span>
+      <span class="sep">·</span>
+      <span>Zero infrastructure cost</span>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 2 — THE IDEA -->
+<section class="slide" data-label="The Idea">
+  <div class="slide-canvas">
+    <div class="slide-num">01</div>
+    <span class="tag">The opportunity</span>
+    <div class="idea-grid">
+      <div>
+        <h2>Fans pay to shape the setlist.</h2>
+        <p class="sub">At ticket checkout, fans vote on songs through a 4-tier system. Embedded inside your existing flow. No app download. No separate platform. Ticketmaster earns a rev share on every dollar spent — before the show even happens.</p>
+      </div>
+      <div class="stat-stack">
+        <div>
+          <div class="big-stat">$9.30</div>
+          <div class="big-stat-label">Blended average spend per fan</div>
+        </div>
+        <div>
+          <div class="big-stat">85%</div>
+          <div class="big-stat-label">Projected fan participation rate</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 3 — HOW IT WORKS -->
+<section class="slide" data-label="How It Works">
+  <div class="slide-canvas">
+    <div class="slide-num">02</div>
+    <span class="tag">The model</span>
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="step">
+        <span class="step-n">01</span>
+        <div class="step-text">
+          <strong>Fan buys a ticket through Ticketmaster</strong>
+          <span>Standard checkout flow, no friction added.</span>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-n">02</span>
+        <div class="step-text">
+          <strong>SetLister voting module appears at confirmation</strong>
+          <span>Fan chooses a tier — $3 Standard up to $25 Legendary — to vote on songs for their show.</span>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-n">03</span>
+        <div class="step-text">
+          <strong>Transaction is final. Immediately.</strong>
+          <span>Minnesota State Lottery model. No refunds. No chargebacks. Revenue recognized at purchase. Zero fan complaints on record.</span>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-n">04</span>
+        <div class="step-text">
+          <strong>If the voted song isn’t played — fan gets merch credit</strong>
+          <span>Artist-agreed policy. Every loop closed before it opens.</span>
+        </div>
+      </div>
+      <div class="step">
+        <span class="step-n">05</span>
+        <div class="step-text">
+          <strong>Revenue splits quarterly. Automatically.</strong>
+          <span>SetLister handles all infrastructure, payouts, and artist relationships.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 4 — REVENUE -->
+<section class="slide" data-label="Revenue">
+  <div class="slide-canvas">
+    <div class="slide-num">03</div>
+    <span class="tag">Kid Cudi · Rebel Ragers Tour 2026 · 33 shows</span>
+    <h2>The numbers on one tour</h2>
+    <div class="rev-split">
+      <div class="rev-block">
+        <div class="rev-pct">40%</div>
+        <div class="rev-who">Artist</div>
+      </div>
+      <div class="rev-block highlight">
+        <div class="rev-pct">15%</div>
+        <div class="rev-who">Ticketmaster</div>
+      </div>
+      <div class="rev-block">
+        <div class="rev-pct">35%</div>
+        <div class="rev-who">SetLister</div>
+      </div>
+      <div class="rev-block">
+        <div class="rev-pct">10%</div>
+        <div class="rev-who">Venue</div>
+      </div>
+    </div>
+    <div class="numbers-row">
+      <div class="num-item">
+        <div class="num-val">~$3.65M</div>
+        <div class="num-label">Total voting revenue</div>
+      </div>
+      <div class="num-item">
+        <div class="num-val">~$547K</div>
+        <div class="num-label">Ticketmaster’s potential share</div>
+      </div>
+      <div class="num-item">
+        <div class="num-val">462K</div>
+        <div class="num-label">Fans in the flow</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 5 — SCALE -->
+<section class="slide" data-label="Scale">
+  <div class="slide-canvas">
+    <div class="slide-num">04</div>
+    <span class="tag">The Live Nation hypothetical</span>
+    <h2>What scale looks like</h2>
+    <p class="sub" style="margin-bottom:0">Based on Live Nation’s own 2025 figures: 55,000 concerts, 159M fans, $26B in ticketing GTV.</p>
+    <table class="scale-table">
+      <thead>
+        <tr>
+          <th>Penetration</th>
+          <th>Shows</th>
+          <th>Fans in flow</th>
+          <th>TM potential earnings</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>5% <span class="pill">Pilot</span></td>
+          <td>2,750</td>
+          <td>~6.8M</td>
+          <td>~$9.5M</td>
+        </tr>
+        <tr>
+          <td>10%</td>
+          <td>5,500</td>
+          <td>~13.6M</td>
+          <td>~$19M</td>
+        </tr>
+        <tr>
+          <td>20%</td>
+          <td>11,000</td>
+          <td>~51.4M</td>
+          <td>~$71.7M</td>
+        </tr>
+        <tr>
+          <td style="color:var(--accent)">Large venues only</td>
+          <td>Full portfolio</td>
+          <td>~67M</td>
+          <td>~$79.5M</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="foot-note">Zero infrastructure cost at any penetration level. Fan-funded. No regulatory exposure.</p>
+  </div>
+</section>
+
+<!-- SLIDE 6 — WHY THIS IS CLEAN -->
+<section class="slide" data-label="Why It's Clean">
+  <div class="slide-canvas">
+    <div class="slide-num">05</div>
+    <span class="tag">Risk profile</span>
+    <h2>Why this revenue is different</h2>
+    <div class="two-col">
+      <div class="col-block">
+        <h3>Traditional service fees</h3>
+        <ul>
+          <li>Mandatory — fans resent them</li>
+          <li>High regulatory &amp; DOJ scrutiny</li>
+          <li>Chargeback &amp; refund exposure</li>
+          <li>Revenue already captured</li>
+          <li>Negative fan sentiment</li>
+        </ul>
+      </div>
+      <div class="col-block emphasis">
+        <h3>SetLister rev share</h3>
+        <ul>
+          <li>Voluntary — fans choose to participate</li>
+          <li>Lottery-precedent model. Zero exposure.</li>
+          <li>No refunds. Not a single complaint on record.</li>
+          <li>100% net-new to the P&amp;L</li>
+          <li>Fan sentiment: overwhelmingly positive</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SLIDE 7 — THE ASK -->
+<section class="slide" data-label="The Ask">
+  <div class="slide-canvas">
+    <div class="slide-num">06</div>
+    <span class="tag">Partnership</span>
+    <h2>The ask</h2>
+    <div class="ask-body">
+      <p class="ask-line">“SetLister builds it. Ticketmaster earns from it. Fans love it.”</p>
+      <div class="rule"></div>
+      <div class="ask-items">
+        <div class="ask-item">
+          <div class="ask-dot"></div>
+          <span>API integration into existing TM checkout flow</span>
+        </div>
+        <div class="ask-item">
+          <div class="ask-dot"></div>
+          <span>SetLister manages all product, artist relationships &amp; payouts</span>
+        </div>
+        <div class="ask-item">
+          <div class="ask-dot"></div>
+          <span>Ticketmaster receives 15% of all voting revenue — zero overhead</span>
+        </div>
+        <div class="ask-item">
+          <div class="ask-dot"></div>
+          <span>Data-sharing agreement: fan behavioral intelligence layered onto TM’s existing customer data</span>
+        </div>
+        <div class="ask-item">
+          <div class="ask-dot"></div>
+          <span>Pilot structure available: start with 5–10 tours, validate, then scale</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const nav = document.getElementById('nav');
+
+  slides.forEach((slide) => {
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot';
+    dot.title = slide.dataset.label || '';
+    dot.addEventListener('click', () => slide.scrollIntoView({ behavior: 'smooth' }));
+    nav.appendChild(dot);
+  });
+
+  const dots = document.querySelectorAll('.nav-dot');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const idx = Array.from(slides).indexOf(entry.target);
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        dots.forEach((d) => d.classList.remove('active'));
+        if (dots[idx]) dots[idx].classList.add('active');
+      }
+    });
+  }, { threshold: 0.4 });
+
+  slides.forEach((s) => observer.observe(s));
+
+  function activeSlideIndex() {
+    for (let i = 0; i < dots.length; i++) {
+      if (dots[i].classList.contains('active')) return i;
+    }
+    return 0;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    const t = e.target;
+    if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) return;
+
+    const i = activeSlideIndex();
+    let next = i;
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'PageDown') {
+      next = Math.min(i + 1, slides.length - 1);
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      next = Math.max(i - 1, 0);
+    } else if (e.key === 'Home') {
+      next = 0;
+    } else if (e.key === 'End') {
+      next = slides.length - 1;
+    } else {
+      return;
+    }
+
+    if (next !== i) {
+      e.preventDefault();
+      slides[next].scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  });
+</script>
+</body>
+</html>

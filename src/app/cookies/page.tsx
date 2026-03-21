@@ -1,8 +1,8 @@
 export default function CookiesPage() {
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-12 uppercase tracking-[0.05em]">
-      <h1 className="text-3xl font-semibold tracking-tight">Cookie Notice</h1>
-      <p className="mt-2 text-sm text-zinc-500">Last updated: March 20, 2026</p>
+    <main className="mx-auto w-full max-w-3xl px-6 py-12 text-[16px] leading-normal uppercase">
+      <h1 className="text-[16px] font-medium">Cookie Notice</h1>
+      <p className="mt-2 text-zinc-500">Last updated: March 20, 2026</p>
 
       <div className="mt-8 space-y-6 text-zinc-700">
         <p>

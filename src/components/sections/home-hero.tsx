@@ -47,7 +47,7 @@ function ScrambleLink({ href, label, tick }: ScrambleLinkProps) {
     <Link
       href={href}
       aria-label={label}
-      className="text-[13px] font-semibold uppercase tracking-[0.1em] text-zinc-900 underline-offset-4 hover:underline"
+      className="text-[13px] font-medium uppercase text-zinc-900 underline-offset-4 hover:underline"
     >
       {display}
     </Link>

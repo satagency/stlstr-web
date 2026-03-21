@@ -1,7 +1,7 @@
 export default function TicketingPage() {
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-12 uppercase tracking-[0.05em]">
-      <h1 className="text-3xl font-semibold tracking-tight">Ticketing</h1>
+    <main className="mx-auto w-full max-w-3xl px-6 py-12 text-[16px] leading-normal uppercase">
+      <h1 className="text-[16px] font-medium">Ticketing</h1>
       <div className="mt-8 space-y-6 text-zinc-700">
         <p>
           setlister.ai works alongside ticketing operations so artists, labels, and

@@ -1,75 +1,91 @@
 export default function PrivacyNoticePage() {
   return (
-    <main className="mx-auto w-full max-w-3xl px-6 py-12 uppercase tracking-[0.05em]">
-      <h1 className="text-3xl font-semibold tracking-tight">Privacy Notice</h1>
-      <p className="mt-2 text-sm text-zinc-500">Last updated: March 20, 2026</p>
+    <main className="mx-auto w-full max-w-3xl px-6 py-12 text-[16px] leading-normal uppercase">
+      <h1 className="text-[16px] font-medium">Privacy Policy</h1>
+      <p className="mt-2 text-zinc-600">Setlister Holdings Inc.</p>
+      <p className="mt-2 text-zinc-500">Last updated: March 20, 2026</p>
 
       <div className="mt-8 space-y-8 text-zinc-700">
         <section>
-          <h2 className="text-xl font-semibold text-zinc-900">1. Introduction</h2>
+          <h2 className="text-[16px] font-medium text-zinc-900">Introduction</h2>
           <p className="mt-2">
-            This Privacy Notice explains how setlister.ai collects, uses, shares, and
-            protects personal information when you use our website and services.
+            This Privacy Policy describes how Setlister Holdings Inc. (&quot;we,&quot;
+            &quot;us,&quot; or &quot;our&quot;) collects, uses, and shares information when
+            you use the Setlister website, applications, and services (the
+            &quot;Service&quot;), including fan-facing setlist experiences (e.g., voting,
+            song requests) and business intelligence tools.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-zinc-900">2. Information We Collect</h2>
+          <h2 className="text-[16px] font-medium text-zinc-900">Information we collect</h2>
           <p className="mt-2">
-            We may collect contact details, account information, usage and device data,
-            and communications you send to us. We only collect information reasonably
-            necessary to provide and improve our services.
+            We collect information you provide directly (e.g., account details, email,
+            votes, song requests, and any stated willingness to pay in request flows). We
+            also collect information automatically when you use the Service (e.g., device
+            and log data, IP address). Where you use setlist experiences on third-party
+            or artist sites, we may receive information from those contexts in accordance
+            with their and our agreements.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-zinc-900">3. How We Use Information</h2>
+          <h2 className="text-[16px] font-medium text-zinc-900">How we use information</h2>
           <p className="mt-2">
-            We use collected information to operate the service, respond to inquiries,
-            support artists and labels, improve product experience, maintain security,
-            and comply with legal obligations.
+            We use the information to operate and improve the Service, to share votes and
+            song requests with artists and their teams as described in the Service, to
+            communicate with you, to comply with legal obligations, and to protect the
+            security and integrity of the Service.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-zinc-900">4. Sharing of Information</h2>
+          <h2 className="text-[16px] font-medium text-zinc-900">Sharing of information</h2>
           <p className="mt-2">
-            We may share information with vendors that help us run our service, with
-            affiliated entities, or when required by law. We do not sell personal
-            information for monetary compensation.
+            Your votes and song requests (including song selections and any stated amounts)
+            are shared with the artist and the team responsible for the performance, as
+            described in the Service. We may share information with service providers who
+            assist us in operating the Service, and where required by law or to protect
+            our rights.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-zinc-900">5. Data Retention</h2>
+          <h2 className="text-[16px] font-medium text-zinc-900">Your choices</h2>
           <p className="mt-2">
-            We retain personal information only as long as needed for the purposes
-            described in this notice, unless a longer period is required by law.
+            You can manage your account and preferences through the Service. You may have
+            rights to access, correct, or delete your personal data depending on your
+            jurisdiction. To exercise those rights or ask questions about our privacy
+            practices, contact us using the details below.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-zinc-900">6. Your Choices and Rights</h2>
+          <h2 className="text-[16px] font-medium text-zinc-900">
+            Data retention and security
+          </h2>
           <p className="mt-2">
-            Depending on your location, you may have rights to access, correct, delete,
-            or restrict processing of your personal information. Contact us to submit a
-            request and we will respond in accordance with applicable law.
+            We retain information for as long as needed to provide the Service and to
+            comply with legal and contractual obligations. We implement appropriate
+            technical and organizational measures to protect your information against
+            unauthorized access, loss, or misuse.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-zinc-900">7. Security</h2>
+          <h2 className="text-[16px] font-medium text-zinc-900">Changes to this policy</h2>
           <p className="mt-2">
-            We implement administrative, technical, and organizational safeguards to
-            protect personal information. No internet transmission is fully secure, so we
-            cannot guarantee absolute security.
+            We may update this Privacy Policy from time to time. The updated version will
+            be posted on this page with a revised effective date. Your continued use of the
+            Service after changes constitutes acceptance of the updated policy.
           </p>
         </section>
 
         <section>
-          <h2 className="text-xl font-semibold text-zinc-900">8. Contact</h2>
+          <h2 className="text-[16px] font-medium text-zinc-900">Contact</h2>
           <p className="mt-2">
-            For privacy-related questions, contact{" "}
+            For questions or comments about this Privacy Policy and our privacy
+            practices, contact us by email at{" "}
             <a className="text-zinc-900 underline" href="mailto:privacy@setlister.ai">
               privacy@setlister.ai
             </a>
