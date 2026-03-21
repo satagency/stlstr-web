@@ -78,7 +78,7 @@ const platformSteps: StepDefinition[] = [
     id: "orgName",
     kind: "text",
     label: "Organization name",
-    placeholder: "Venue, promoter, platform…",
+    placeholder: "Venue, promoter, or ticketing partner…",
   },
   {
     id: "contactName",
@@ -113,5 +113,5 @@ export function stepsForRole(role: OnboardingRole): StepDefinition[] {
 export const roleChoices: { value: OnboardingRole; label: string; hint: string }[] = [
   { value: "artist", label: "Artist", hint: "Solo act, band, or project" },
   { value: "label", label: "Label", hint: "Imprint, management, or catalog" },
-  { value: "platform", label: "Platform", hint: "Venue, promoter, or tech partner" },
+  { value: "platform", label: "Platform", hint: "Venue, promoter, or ticketing partner" },
 ];

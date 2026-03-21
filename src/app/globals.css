@@ -17,3 +17,13 @@ body {
   color: var(--foreground);
   font-family: var(--font-ibm-plex-mono), monospace;
 }
+
+/* Onboarding: Inter for questions, body copy, inputs, and placeholders (see onboarding/layout.tsx). */
+.onboarding-form-inter {
+  font-family: var(--font-onboarding-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+.onboarding-form-inter input,
+.onboarding-form-inter textarea {
+  font-family: inherit;
+}

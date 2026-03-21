@@ -203,7 +203,7 @@ export function OnboardingFlow() {
         </Link>
       </header>
 
-      <main className="flex flex-1 flex-col justify-center px-4 py-10 sm:px-6">
+      <main className="onboarding-form-inter flex flex-1 flex-col justify-center px-4 py-10 sm:px-6 antialiased">
         <div className="mx-auto w-full max-w-xl">
           <AnimatePresence mode="wait">
             {phase === "role" && (
