@@ -101,14 +101,14 @@ export function HomeHero() {
           }}
         >
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
-            <ScrambleLink href="mailto:artists@setlister.ai" label="ARTIST" tick={scrambleTick} />
+            <ScrambleLink href="/onboarding?role=artist" label="ARTIST" tick={scrambleTick} />
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
-            <ScrambleLink href="mailto:labels@setlister.ai" label="LABELS" tick={scrambleTick} />
+            <ScrambleLink href="/onboarding?role=label" label="LABELS" tick={scrambleTick} />
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
             <ScrambleLink
-              href="mailto:ticketing@setlister.ai"
+              href="/onboarding?role=platform"
               label="PLATFORMS"
               tick={scrambleTick}
             />
