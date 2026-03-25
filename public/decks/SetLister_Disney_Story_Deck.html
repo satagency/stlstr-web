@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SetLister — The Story</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink: #0d0b14;
+    --gold: #e8b84b;
+    --glow: #c8ff00;
+    --parchment: #f0ead8;
+    --mist: rgba(240,234,216,0.45);
+    --dim: rgba(240,234,216,0.28);
+  }
+
+  html { scroll-snap-type: y mandatory; overflow-y: scroll; }
+
+  body {
+    background: var(--ink);
+    font-family: 'Jost', sans-serif;
+    font-weight: 200;
+    cursor: default;
+  }
+
+  /* ── SLIDE BASE ── */
+  .slide {
+    position: relative;
+    min-height: 100vh;
+    scroll-snap-align: start;
+    display: flex;
+    align-items: flex-end;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 1s ease;
+  }
+  .slide.visible { opacity: 1; }
+
+  /* Art zone — fills the slide, placeholder until image dropped in */
+  .art {
+    position: absolute;
+    inset: 0;
+    background: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  /* Placeholder watercolor texture when no image yet */
+  .art-placeholder {
+    width: 100%;
+    height: 100%;
+    position: relative;
+  }
+
+  .art svg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    inset: 0;
+  }
+
+  /* Gradient overlay so text is always readable */
+  .art::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(13,11,20,0.95) 0%,
+      rgba(13,11,20,0.65) 35%,
+      rgba(13,11,20,0.1) 70%,
+      transparent 100%
+    );
+    pointer-events: none;
+  }
+
+  /* ── TEXT LAYER ── */
+  .copy {
+    position: relative;
+    z-index: 10;
+    padding: 0 80px 72px;
+    max-width: 860px;
+    width: 100%;
+  }
+
+  .page-tag {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+    font-size: 10px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .page-tag::before {
+    content: '';
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: var(--gold);
+    opacity: 0.6;
+  }
+
+  .story-line {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(32px, 4.5vw, 58px);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: var(--parchment);
+    margin-bottom: 0;
+  }
+
+  .story-line em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .story-line strong {
+    font-weight: 400;
+    color: #ffffff;
+  }
+
+  /* ── COVER SLIDE ── */
+  .slide-cover .copy {
+    padding-bottom: 80px;
+  }
+
+  .cover-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(56px, 9vw, 120px);
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--parchment);
+    margin-bottom: 24px;
+  }
+
+  .cover-title em {
+    font-style: italic;
+    color: var(--gold);
+  }
+
+  .cover-sub {
+    font-size: 13px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-weight: 300;
+  }
+
+  /* ── DATA SLIDE ── */
+  .data-block {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 16px;
+  }
+
+  .data-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(64px, 10vw, 110px);
+    line-height: 1;
+    letter-spacing: -0.03em;
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .data-label {
+    font-size: 12px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--dim);
+  }
+
+  /* ── SPLIT SLIDE ── */
+  .split-nums {
+    display: flex;
+    gap: 48px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+
+  .split-item {}
+
+  .split-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(40px, 6vw, 72px);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .split-lbl {
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-top: 4px;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: fixed;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 200;
+  }
+
+  .nav-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: rgba(240,234,216,0.2);
+    cursor: pointer;
+    transition: all 0.4s ease;
+  }
+
+  .nav-dot.active {
+    background: var(--gold);
+    width: 20px;
+    border-radius: 2px;
+  }
+
+  /* ── HERO TAG top-right ── */
+  .hero-tag {
+    position: absolute;
+    top: 36px;
+    right: 80px;
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(232,184,75,0.35);
+    z-index: 10;
+    font-family: 'Jost', sans-serif;
+    font-weight: 300;
+  }
+
+  /* ── PROMPT BADGE ── */
+  .prompt-badge {
+    position: absolute;
+    top: 36px;
+    left: 80px;
+    font-size: 9px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(200,255,0,0.3);
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .prompt-badge::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--glow);
+    opacity: 0.4;
+  }
+
+  @media (max-width: 768px) {
+    .copy { padding: 0 32px 48px; }
+    .hero-tag { right: 32px; }
+    .prompt-badge { left: 32px; }
+    .split-nums { gap: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav" id="nav"></nav>
+
+<!-- ═══════════════════════════════════
+     COVER
+════════════════════════════════════ -->
+<section class="slide" data-hero="SetLister">
+  <div class="art">
+    <!-- DROP COVER ART HERE -->
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="rg0" cx="50%" cy="60%" r="70%">
+          <stop offset="0%" stop-color="#2a1f4a"/>
+          <stop offset="60%" stop-color="#110d1e"/>
+          <stop offset="100%" stop-color="#0d0b14"/>
+        </radialGradient>
+        <filter id="blur0"><feGaussianBlur stdDeviation="3"/></filter>
+      </defs>
+      <rect width="1920" height="1080" fill="url(#rg0)"/>
+      <g opacity="0.12" filter="url(#blur0)">
+        <circle cx="960" cy="400" r="280" fill="#e8b84b"/>
+        <circle cx="700" cy="600" r="160" fill="#c8ff00"/>
+        <circle cx="1200" cy="500" r="200" fill="#7b4faf"/>
+      </g>
+      <!-- Placeholder music notes -->
+      <g opacity="0.07" fill="#e8b84b" font-family="Georgia" font-size="48">
+        <text x="200" y="300">♩</text><text x="400" y="500">♪</text>
+        <text x="800" y="200">♫</text><text x="1100" y="600">♩</text>
+        <text x="1400" y="350">♪</text><text x="1600" y="500">♫</text>
+        <text x="300" y="700">♫</text><text x="1700" y="250">♩</text>
+      </g>
+    </svg>
+  </div>
+  <span class="hero-tag">A Story in 11 Pages</span>
+  <div class="copy">
+    <h1 class="cover-title">A new<br>kind of<br><em>magic.</em></h1>
+    <p class="cover-sub">SetLister × Ticketmaster &nbsp;·&nbsp; March 2026</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PAGE 1 — THE WORLD BEFORE
+════════════════════════════════════ -->
+<section class="slide" data-hero="The Fan">
+  <div class="art">
+    <!-- DROP ART: Lone fan at cold blue ticket kiosk, muted grey world -->
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs><radialGradient id="rg1" cx="45%" cy="50%" r="55%"><stop offset="0%" stop-color="#1a2a4a"/><stop offset="100%" stop-color="#0d0b14"/></radialGradient></defs>
+      <rect width="1920" height="1080" fill="url(#rg1)"/>
+      <rect x="820" y="280" width="280" height="420" rx="12" fill="#1e3a5a" opacity="0.4"/>
+      <rect x="880" y="320" width="160" height="80" rx="4" fill="#4a8aaa" opacity="0.3"/>
+    </svg>
+  </div>
+  <span class="hero-tag">The Fan</span>
+  <span class="prompt-badge">Page 01 · Art needed</span>
+  <div class="copy">
+    <p class="page-tag">The world before</p>
+    <p class="story-line">Every night, millions of fans<br>buy a ticket.<br><em>They get a barcode.</em><br>And then they wait.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PAGE 2 — THE SPARK
+════════════════════════════════════ -->
+<section class="slide" data-hero="The Fan">
+  <div class="art">
+    <!-- DROP ART: Crack of gold light, music notes spiraling, world blooming with color -->
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs><linearGradient id="lg2" x1="40%" y1="0%" x2="60%" y2="100%"><stop offset="0%" stop-color="#e8b84b" stop-opacity="0.15"/><stop offset="100%" stop-color="#0d0b14"/></linearGradient></defs>
+      <rect width="1920" height="1080" fill="#0d0b14"/>
+      <rect width="1920" height="1080" fill="url(#lg2)"/>
+      <line x1="960" y1="0" x2="960" y2="1080" stroke="#e8b84b" stroke-width="2" opacity="0.15"/>
+    </svg>
+  </div>
+  <span class="hero-tag">The Fan</span>
+  <span class="prompt-badge">Page 02 · Art needed</span>
+  <div class="copy">
+    <p class="page-tag">The spark</p>
+    <p class="story-line">But what if buying the ticket<br>was only <em>the beginning?</em><br>What if — right at that moment —<br><strong>the fan had a voice?</strong></p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PAGE 3 — THE VOTE
+════════════════════════════════════ -->
+<section class="slide" data-hero="The Fan">
+  <div class="art">
+    <!-- DROP ART: Hands over glowing phone, 4 tarot-style song cards floating -->
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs><radialGradient id="rg3" cx="50%" cy="55%" r="45%"><stop offset="0%" stop-color="#2d1e3a"/><stop offset="100%" stop-color="#0d0b14"/></radialGradient></defs>
+      <rect width="1920" height="1080" fill="url(#rg3)"/>
+      <rect x="660" y="200" width="160" height="240" rx="8" fill="#c8ff00" opacity="0.08"/>
+      <rect x="840" y="180" width="160" height="240" rx="8" fill="#e8b84b" opacity="0.12"/>
+      <rect x="1020" y="200" width="160" height="240" rx="8" fill="#7b4faf" opacity="0.1"/>
+      <rect x="1200" y="220" width="160" height="240" rx="8" fill="#e8b84b" opacity="0.07"/>
+    </svg>
+  </div>
+  <span class="hero-tag">The Fan</span>
+  <span class="prompt-badge">Page 03 · Art needed</span>
+  <div class="copy">
+    <p class="page-tag">The vote</p>
+    <p class="story-line">She chooses a song.<br><em>$10. A Rare Vote.</em><br>Her favorite deep cut.<br>The one she's never heard live.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PAGE 4 — THE RIPPLE
+════════════════════════════════════ -->
+<section class="slide" data-hero="The Fan">
+  <div class="art">
+    <!-- DROP ART: Aerial city at night, golden sparks rising from windows converging into constellation -->
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs><radialGradient id="rg4" cx="50%" cy="30%" r="60%"><stop offset="0%" stop-color="#1a0f2e"/><stop offset="100%" stop-color="#0d0b14"/></radialGradient></defs>
+      <rect width="1920" height="1080" fill="url(#rg4)"/>
+      <g opacity="0.15" fill="#e8b84b">
+        <circle cx="960" cy="200" r="80"/><circle cx="960" cy="200" r="140" fill="none" stroke="#e8b84b" stroke-width="1"/>
+        <circle cx="960" cy="200" r="200" fill="none" stroke="#e8b84b" stroke-width="0.5" opacity="0.5"/>
+      </g>
+    </svg>
+  </div>
+  <span class="hero-tag">The Fan</span>
+  <span class="prompt-badge">Page 04 · Art needed</span>
+  <div class="copy">
+    <p class="page-tag">The ripple</p>
+    <p class="story-line">Across the city, thousands<br>of fans do the same.<br>Each vote — <em>a spark.</em><br>Together — <strong>a constellation.</strong></p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PAGE 5 — THE ARTIST FEELS IT
+════════════════════════════════════ -->
+<section class="slide" data-hero="The Artist">
+  <div class="art">
+    <!-- DROP ART: Artist backstage, phone glowing with star-chart of fan requests -->
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs><radialGradient id="rg5" cx="55%" cy="60%" r="50%"><stop offset="0%" stop-color="#1e1a0d"/><stop offset="100%" stop-color="#0d0b14"/></radialGradient></defs>
+      <rect width="1920" height="1080" fill="url(#rg5)"/>
+      <rect x="830" y="300" width="260" height="420" rx="20" fill="#e8b84b" opacity="0.07"/>
+    </svg>
+  </div>
+  <span class="hero-tag">The Artist</span>
+  <span class="prompt-badge">Page 05 · Art needed</span>
+  <div class="copy">
+    <p class="page-tag">Three weeks before the show</p>
+    <p class="story-line">The artist sees the map.<br>Every fan. Every wish.<br><em>The setlist writes itself.</em></p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PAGE 6 — THE SHOW
+════════════════════════════════════ -->
+<section class="slide" data-hero="The Artist">
+  <div class="art">
+    <!-- DROP ART: Stage silhouette, sea of crowd, gold sound waves rippling outward -->
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="rg6" cx="50%" cy="20%" r="70%">
+          <stop offset="0%" stop-color="#4a2800"/>
+          <stop offset="50%" stop-color="#1a0d00"/>
+          <stop offset="100%" stop-color="#0d0b14"/>
+        </radialGradient>
+      </defs>
+      <rect width="1920" height="1080" fill="url(#rg6)"/>
+      <ellipse cx="960" cy="160" rx="400" ry="120" fill="#e8b84b" opacity="0.18"/>
+      <rect x="900" y="160" width="120" height="300" fill="#0d0b14" opacity="0.8"/>
+    </svg>
+  </div>
+  <span class="hero-tag">The Artist</span>
+  <span class="prompt-badge">Page 06 · Art needed</span>
+  <div class="copy">
+    <p class="page-tag">The moment</p>
+    <p class="story-line">He walks out.<br>He leans into the mic.<br><em>"This one —</em><br><em>you voted for this one."</em><br><strong>The crowd erupts.</strong></p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PAGE 7 — THE MEMORY
+════════════════════════════════════ -->
+<section class="slide" data-hero="The Fan">
+  <div class="art">
+    <!-- DROP ART: Fan outside venue, glowing digital collectible on phone, golden afterglow -->
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs><radialGradient id="rg7" cx="50%" cy="50%" r="55%"><stop offset="0%" stop-color="#1a1200"/><stop offset="100%" stop-color="#0d0b14"/></radialGradient></defs>
+      <rect width="1920" height="1080" fill="url(#rg7)"/>
+      <rect x="850" y="250" width="220" height="360" rx="16" fill="#e8b84b" opacity="0.08"/>
+      <rect x="870" y="280" width="180" height="240" rx="8" fill="#c8ff00" opacity="0.06"/>
+    </svg>
+  </div>
+  <span class="hero-tag">The Fan</span>
+  <span class="prompt-badge">Page 07 · Art needed</span>
+  <div class="copy">
+    <p class="page-tag">The memory</p>
+    <p class="story-line">After the last note fades,<br>she receives something<br>no fan has ever been given before.<br><em>Proof she was part of it.</em></p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PAGE 8 — THE RIVER OF GOLD
+════════════════════════════════════ -->
+<section class="slide" data-hero="Ticketmaster">
+  <div class="art">
+    <!-- DROP ART: Aerial gold river flowing through city of venues -->
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="lg8" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#0d0b14"/>
+          <stop offset="40%" stop-color="#1a1200"/>
+          <stop offset="100%" stop-color="#0d0b14"/>
+        </linearGradient>
+      </defs>
+      <rect width="1920" height="1080" fill="url(#lg8)"/>
+      <path d="M200,300 Q600,400 960,350 Q1300,300 1720,450" stroke="#e8b84b" stroke-width="3" fill="none" opacity="0.2"/>
+      <path d="M200,320 Q600,420 960,370 Q1300,320 1720,470" stroke="#e8b84b" stroke-width="1" fill="none" opacity="0.1"/>
+    </svg>
+  </div>
+  <span class="hero-tag">Ticketmaster</span>
+  <span class="prompt-badge">Page 08 · Art needed</span>
+  <div class="copy">
+    <p class="page-tag">The river of gold</p>
+    <p class="story-line">And for Ticketmaster?<br><em>A new river</em> — flowing through<br>the same door they already built.<br>Not a new product. New magic.</p>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PAGE 9 — THE NUMBER
+════════════════════════════════════ -->
+<section class="slide" data-hero="Ticketmaster">
+  <div class="art">
+    <!-- DROP ART: Glowing "547" in gold serif against deep midnight, crowd as impressionist brushstrokes below -->
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs><radialGradient id="rg9" cx="50%" cy="45%" r="40%"><stop offset="0%" stop-color="#2a1a00"/><stop offset="100%" stop-color="#0d0b14"/></radialGradient></defs>
+      <rect width="1920" height="1080" fill="url(#rg9)"/>
+      <text x="960" y="560" font-family="Georgia" font-size="320" fill="#e8b84b" opacity="0.06" text-anchor="middle" font-style="italic">547</text>
+    </svg>
+  </div>
+  <span class="hero-tag">Ticketmaster</span>
+  <span class="prompt-badge">Page 09 · Art needed</span>
+  <div class="copy">
+    <p class="page-tag">One tour · Kid Cudi Rebel Ragers 2026</p>
+    <div class="data-block">
+      <div class="data-num">~$547K</div>
+      <div class="data-label">Ticketmaster's potential share · 33 shows · 462,000 fans · zero overhead</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PAGE 10 — THE SCALE
+════════════════════════════════════ -->
+<section class="slide" data-hero="Ticketmaster">
+  <div class="art">
+    <!-- DROP ART: Full night sky constellation of music notes and fan figures, Milky Way scale -->
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs><radialGradient id="rg10" cx="50%" cy="40%" r="70%"><stop offset="0%" stop-color="#14103a"/><stop offset="100%" stop-color="#0d0b14"/></radialGradient></defs>
+      <rect width="1920" height="1080" fill="url(#rg10)"/>
+      <g opacity="0.12" fill="#e8b84b">
+        <circle cx="300" cy="200" r="2"/><circle cx="600" cy="150" r="1.5"/>
+        <circle cx="900" cy="220" r="2.5"/><circle cx="1200" cy="180" r="2"/>
+        <circle cx="1500" cy="160" r="1.5"/><circle cx="450" cy="350" r="1"/>
+        <circle cx="750" cy="300" r="2"/><circle cx="1050" cy="320" r="1.5"/>
+        <circle cx="1350" cy="280" r="2"/><circle cx="1650" cy="340" r="1"/>
+        <circle cx="200" cy="450" r="1.5"/><circle cx="500" cy="420" r="2"/>
+        <circle cx="800" cy="480" r="1"/><circle cx="1100" cy="440" r="2.5"/>
+        <circle cx="1400" cy="460" r="1.5"/><circle cx="1700" cy="420" r="2"/>
+      </g>
+    </svg>
+  </div>
+  <span class="hero-tag">Ticketmaster</span>
+  <span class="prompt-badge">Page 10 · Art needed</span>
+  <div class="copy">
+    <p class="page-tag">The scale · Live Nation 2025 · 55,000 concerts · 159M fans</p>
+    <p class="story-line">One tour is a spark.<br>The whole catalog is<br><em>a constellation.</em></p>
+    <div class="split-nums" style="margin-top:24px">
+      <div class="split-item">
+        <div class="split-val">~$9.5M</div>
+        <div class="split-lbl">TM at 5% penetration</div>
+      </div>
+      <div class="split-item">
+        <div class="split-val">~$71.7M</div>
+        <div class="split-lbl">TM at 20% penetration</div>
+      </div>
+      <div class="split-item">
+        <div class="split-val">~$79.5M</div>
+        <div class="split-lbl">TM at full large venues</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════
+     PAGE 11 — THE ASK
+════════════════════════════════════ -->
+<section class="slide" data-hero="Together">
+  <div class="art">
+    <!-- DROP ART: Two figures facing glowing doorway together, gold light pouring through -->
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="rg11" cx="50%" cy="50%" r="35%">
+          <stop offset="0%" stop-color="#3a2200"/>
+          <stop offset="60%" stop-color="#1a1000"/>
+          <stop offset="100%" stop-color="#0d0b14"/>
+        </radialGradient>
+      </defs>
+      <rect width="1920" height="1080" fill="url(#rg11)"/>
+      <rect x="830" y="200" width="260" height="500" fill="#e8b84b" opacity="0.05"/>
+      <rect x="840" y="210" width="240" height="480" fill="#e8b84b" opacity="0.04"/>
+    </svg>
+  </div>
+  <span class="hero-tag">Together</span>
+  <span class="prompt-badge">Page 11 · Art needed</span>
+  <div class="copy">
+    <p class="page-tag">The ask</p>
+    <p class="story-line"><em>We built the magic.</em><br>You have the door.<br><strong>Let's open it together.</strong></p>
+  </div>
+</section>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const nav = document.getElementById('nav');
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'nav-dot';
+    dot.addEventListener('click', () => slides[i].scrollIntoView({ behavior: 'smooth' }));
+    nav.appendChild(dot);
+  });
+
+  const dots = document.querySelectorAll('.nav-dot');
+
+  let current = 0;
+
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const idx = Array.from(slides).indexOf(entry.target);
+      if (entry.isIntersecting) {
+        current = idx;
+        entry.target.classList.add('visible');
+        dots.forEach(d => d.classList.remove('active'));
+        if (dots[idx]) dots[idx].classList.add('active');
+      }
+    });
+  }, { threshold: 0.45 });
+
+  slides.forEach(s => io.observe(s));
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      const next = Math.min(current + 1, slides.length - 1);
+      slides[next].scrollIntoView({ behavior: 'smooth' });
+    } else if (e.key === 'ArrowUp' || e.key === 'ArrowLeft') {
+      e.preventDefault();
+      const prev = Math.max(current - 1, 0);
+      slides[prev].scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+</script>
+</body>
+</html>

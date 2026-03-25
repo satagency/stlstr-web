@@ -14,6 +14,10 @@ const nextConfig: NextConfig = {
         source: "/decks/ticketmaster-exec",
         destination: "/decks/SetLister_x_Ticketmaster_Exec_Deck.html",
       },
+      {
+        source: "/decks/story",
+        destination: "/decks/SetLister_Disney_Story_Deck.html",
+      },
     ];
   },
 };
