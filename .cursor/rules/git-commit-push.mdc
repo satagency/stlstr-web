@@ -1,0 +1,15 @@
+---
+description: After substantive edits, commit and push to origin
+alwaysApply: true
+---
+
+# Git: commit and push
+
+When you finish a task that changes the codebase (or the user asks to save work), **commit and push** unless they explicitly say not to.
+
+1. `git status` — confirm what changed.
+2. `git add` only the files that belong to the task.
+3. `git commit` with a short, accurate message (imperative mood; what/why in body if needed).
+4. `git push` to the current branch’s remote (usually `origin`).
+
+If there is nothing to commit, say so; if push fails (auth, conflicts), fix or report clearly.
