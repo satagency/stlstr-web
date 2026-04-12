@@ -5,6 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 
 const SCRAMBLE_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+const SETLISTER_ARTISTS_URL = "https://setlister.wtf/artists";
 
 type ScrambleLinkProps = {
   href: string;
@@ -101,14 +102,14 @@ export function HomeHero() {
           }}
         >
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
-            <ScrambleLink href="/onboarding?role=artist" label="ARTIST" tick={scrambleTick} />
+            <ScrambleLink href={SETLISTER_ARTISTS_URL} label="ARTIST" tick={scrambleTick} />
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
-            <ScrambleLink href="/onboarding?role=label" label="LABELS" tick={scrambleTick} />
+            <ScrambleLink href={SETLISTER_ARTISTS_URL} label="LABELS" tick={scrambleTick} />
           </motion.div>
           <motion.div variants={{ hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } }}>
             <ScrambleLink
-              href="/onboarding?role=platform"
+              href={SETLISTER_ARTISTS_URL}
               label="PLATFORMS"
               tick={scrambleTick}
             />
